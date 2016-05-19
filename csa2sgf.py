@@ -37,6 +37,67 @@ def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
     return s
 
 
+def sgf_point_from_point(x, y):                            # 3, 3 --> "cc"
+    if x < 1 or x > 26 or y < 1 or y > 26:
+        return None
+    s = ""
+    s += chr(x + 96)
+    s += chr(y + 96)
+    return s
+
+
+def handicap_points(boardsize, handicap, tygem = False):
+
+    points = set()
+
+    if boardsize < 4:
+        return points
+
+    if handicap > 9:
+        handicap = 9
+
+    if boardsize < 13:
+        d = 2
+    else:
+        d = 3
+
+    if handicap >= 2:
+        points.add((boardsize - d, 1 + d))
+        points.add((1 + d, boardsize - d))
+
+    # Experiments suggest Tygem puts its 3rd handicap stone in the top left
+
+    if handicap >= 3:
+        if tygem:
+            points.add((1 + d, 1 + d))
+        else:
+            points.add((boardsize - d, boardsize - d))
+
+    if handicap >= 4:
+        if tygem:
+            points.add((boardsize - d, boardsize - d))
+        else:
+            points.add((1 + d, 1 + d))
+
+    if boardsize % 2 == 0:      # No handicap > 4 on even sided boards
+        return points
+
+    mid = (boardsize + 1) // 2
+
+    if handicap in [5, 7, 9]:
+        points.add((mid, mid))
+
+    if handicap >= 6:
+        points.add((1 + d, mid))
+        points.add((boardsize - d, mid))
+
+    if handicap >= 8:
+        points.add((mid, 1 + d))
+        points.add((mid, boardsize - d))
+
+    return points
+
+
 def get_metadata(strings):
     metadata = dict()
 
@@ -47,6 +108,11 @@ def get_metadata(strings):
             metadata["PW"] = s[7:]
         if s.startswith("Komi: "):
             metadata["KM"] = s[6:]
+        if s.startswith("Handicap Stones: "):
+            try:
+                metadata["HA"] = int(s[17:])
+            except:
+                pass
 
         if len(s) == 10 and s[4] == "/" and s[7] == "/":
             metadata["DT"] = "{}-{}-{}".format(s[0:4], s[5:7], s[8:10])
@@ -105,11 +171,18 @@ def main():
                     nextstart += 1
 
             sgf = "(;"
+            colour = "B"
 
             for key in metadata:
                 sgf += key + "[" + str(metadata[key]) + "]"
 
-            colour = "B"
+            if metadata.get("HA"):
+                colour = "W"
+                points = handicap_points(19, metadata["HA"])
+                sgf += "AB"
+                for point in points:
+                    sgf += "[{}]".format(sgf_point_from_point(point[0], point[1]))
+                sgf += "C[WARNING: Handicap placement has been guessed at by csa2sgf.py]"
 
             for s in goodstrings:
 
