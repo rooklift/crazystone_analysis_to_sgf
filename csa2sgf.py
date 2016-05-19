@@ -10,6 +10,8 @@ OTHER_MOVE_REGEX = r'([A-Z],[ \d]\d)(.*)$'              # needs to be run on onl
 
 SITUATION_REGEX = r'(0\.\d\d\d\d)'
 
+HOTSPOT_DELTA = 0.04    # Hotspot (sgf: "HO[1]") if delta >= this
+
 
 def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
     if len(s) not in [2,3]:
@@ -107,7 +109,10 @@ def get_metadata(strings):
         if s.startswith("White: "):
             metadata["PW"] = s[7:]
         if s.startswith("Komi: "):
-            metadata["KM"] = s[6:]
+            try:
+                metadata["KM"] = float(s[6:])
+            except:
+                pass
         if s.startswith("Handicap Stones: "):
             try:
                 metadata["HA"] = int(s[17:])
@@ -221,6 +226,8 @@ def main():
                             try:
                                 delta_float = float(delta)
                                 comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
+                                if delta_float >= HOTSPOT_DELTA:
+                                    sgf += "HO[1]"
                             except:
                                 comment += "\n"
 
