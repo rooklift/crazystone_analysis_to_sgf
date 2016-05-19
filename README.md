@@ -1,5 +1,5 @@
 # crazystone_analysis_to_sgf
-Convert a CrazyStone XPS / OXPS analysis file to SGF
+Convert a [CrazyStone](http://www.remi-coulom.fr/CrazyStone/) XPS / OXPS analysis file to SGF
 
 To use:
 
