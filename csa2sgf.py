@@ -37,6 +37,25 @@ def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
     return s
 
 
+def get_metadata(strings):
+    metadata = dict()
+
+    for s in strings:
+        if s.startswith("Black: "):
+            metadata["PB"] = s[7:]
+        if s.startswith("White: "):
+            metadata["PW"] = s[7:]
+        if s.startswith("Komi: "):
+            metadata["KM"] = s[6:]
+
+        if len(s) == 10 and s[4] == "/" and s[7] == "/":
+            metadata["DT"] = "{}-{}-{}".format(s[0:4], s[5:7], s[8:10])
+
+    metadata["GM"] = 1
+    metadata["FF"] = 4
+    return metadata
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: {0} <filename>".format(sys.argv[0]))
@@ -74,6 +93,8 @@ def main():
                 if extract:
                     strings.append(extract.group(1))
 
+            metadata = get_metadata(strings)
+
             goodstrings = []
 
             nextstart = 1
@@ -83,7 +104,11 @@ def main():
                     goodstrings.append(s)
                     nextstart += 1
 
-            sgf = "(;GM[1]FF[4]CA[UTF-8]"
+            sgf = "(;"
+
+            for key in metadata:
+                sgf += key + "[" + str(metadata[key]) + "]"
+
             colour = "B"
 
             for s in goodstrings:
@@ -92,6 +117,9 @@ def main():
 
                 extract = re.search(MOVE_REGEX, s)
                 if extract:
+
+                    # i.e. there actually is a move
+
                     actual_move = extract.group(1)
                     letter = actual_move[0]
                     number = int(actual_move[2:])
@@ -100,7 +128,7 @@ def main():
                     sgf += ";{}[{}]".format(colour, sgf_move)
                     comment = ""
 
-                    colour = "B" if colour == "W" else "W"
+                    colour = "B" if colour == "W" else "W"          # This is for the next move after this one
 
                     # Second REGEX
 
@@ -129,6 +157,8 @@ def main():
                     if extract:
                         situation_float = float(extract.group(1))
                         comment += "Black winrate: {:.2f} %\n".format(situation_float * 100)
+
+                    # Done
 
                     if comment:
                         comment = comment.strip()
