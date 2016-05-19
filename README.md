@@ -10,4 +10,4 @@ To use:
 Limitations:
 
 * Assumes 19x19
-* Doesn't understand handicaps
+* The location of handicap stones has to be guessed (i.e. free handicaps won't be placed correctly, and handicap == 3 is dubious also)
