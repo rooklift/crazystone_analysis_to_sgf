@@ -3,8 +3,8 @@ import re, sys, zipfile
 class BadFile(Exception): pass
 
 UNICODE_STRING_REGEX = r'UnicodeString="(.+)"'
-
-MOVE_DELTA_REGEX = r'([A-Z],[ \d]\d)(.*)'
+MOVE_REGEX = r'([A-Z],[ \d]\d)'
+MOVE_AND_DELTA_REGEX = r'([A-Z],[ \d]\d)(.*)'
 
 
 def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
@@ -88,7 +88,7 @@ def main():
 
                 # actual_move = s[len(startstring): len(startstring) + 4]
 
-                extract = re.search(MOVE_DELTA_REGEX, s)
+                extract = re.search(MOVE_REGEX, s)
                 if extract:
                     actual_move = extract.group(1)
                     letter = actual_move[0]
@@ -100,7 +100,7 @@ def main():
                     colour = "B" if colour == "W" else "W"
                     nextstart += 1
 
-                    extract_2 = re.search(MOVE_DELTA_REGEX, s[8:])
+                    extract_2 = re.search(MOVE_AND_DELTA_REGEX, s[8:])
                     if extract_2:
                         better_move = extract_2.group(1)
                         letter = better_move[0]
