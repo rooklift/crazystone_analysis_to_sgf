@@ -3,8 +3,10 @@ import re, sys, zipfile
 class BadFile(Exception): pass
 
 UNICODE_STRING_REGEX = r'UnicodeString="(.+)"'
-MOVE_REGEX = r'([A-Z],[ \d]\d)'
-MOVE_AND_DELTA_REGEX = r'([A-Z],[ \d]\d)(.*)'
+
+MOVE_DATA_REGEX = r'\d+ ([A-Z],[ \d]\d)\d\d:\d\d:\d\d(.+) ([A-Z],[ \d]\d)(.*)'
+
+SITUATION_REGEX = r'(0\.\d\d\d\d)'
 
 
 def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
@@ -82,13 +84,9 @@ def main():
             sgf = "(;GM[1]FF[4]CA[UTF-8]"
             colour = "B"
 
-            nextstart = 1
             for s in goodstrings:
-                startstring = "{} ".format(nextstart)
 
-                # actual_move = s[len(startstring): len(startstring) + 4]
-
-                extract = re.search(MOVE_REGEX, s)
+                extract = re.search(MOVE_DATA_REGEX, s)
                 if extract:
                     actual_move = extract.group(1)
                     letter = actual_move[0]
@@ -98,25 +96,36 @@ def main():
                     sgf += ";{}[{}]".format(colour, sgf_move)
 
                     colour = "B" if colour == "W" else "W"
-                    nextstart += 1
 
-                    extract_2 = re.search(MOVE_AND_DELTA_REGEX, s[8:])
-                    if extract_2:
-                        better_move = extract_2.group(1)
-                        letter = better_move[0]
-                        number = int(better_move[2:])
-                        sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19) # FIXME: currently assuming 19x19
+                    better_move = extract.group(3)
+                    letter = better_move[0]
+                    number = int(better_move[2:])
+                    sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19) # FIXME: currently assuming 19x19
 
-                        sgf += "TR[{}]".format(sgf_move)
+                    sgf += "TR[{}]".format(sgf_move)
 
-                        delta = extract_2.group(2)
+                    delta = extract.group(4)
 
+                    comment = ""
+
+                    if better_move != actual_move:
+                        comment += "CS prefers {}{}".format(letter, number)
                         try:
                             delta_float = float(delta)
-                            sgf += "C[Delta: {:.2f} %]".format(delta_float * 100)
+                            comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
                         except:
-                            pass
+                            comment += "\n"
 
+                    extra_data = extract.group(2)
+
+                    situation = re.search(SITUATION_REGEX, extra_data)
+                    if situation:
+                        situation_float = float(situation.group(1))
+                        comment += "Black winrate: {:.2f} %\n".format(situation_float * 100)
+
+                    if comment:
+                        comment = comment.strip()
+                        sgf += "C[{}]".format(comment)
 
             sgf += ")"
 
