@@ -6,7 +6,7 @@ UNICODE_STRING_REGEX = r'UnicodeString="(.+)"'
 
 MOVE_REGEX = r'([A-Z],[ \d]\d)'
 
-OTHER_MOVE_REGEX = r'([A-Z],[ \d]\d)(.*)$'
+OTHER_MOVE_REGEX = r'([A-Z],[ \d]\d)(.*)$'              # needs to be run on only the latter part of the string, else it will get 1st move
 
 SITUATION_REGEX = r'(0\.\d\d\d\d)'
 
@@ -73,7 +73,6 @@ def main():
                 extract = re.search(UNICODE_STRING_REGEX, str(line))
                 if extract:
                     strings.append(extract.group(1))
-                    print(extract.group(1))
 
             goodstrings = []
 
@@ -145,4 +144,3 @@ def main():
 
 
 main()
-input()
