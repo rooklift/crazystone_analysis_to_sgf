@@ -4,7 +4,9 @@ class BadFile(Exception): pass
 
 UNICODE_STRING_REGEX = r'UnicodeString="(.+)"'
 
-MOVE_DATA_REGEX = r'\d+ ([A-Z],[ \d]\d)\d\d:\d\d:\d\d(.+) ([A-Z],[ \d]\d)(.*)'
+MOVE_REGEX = r'([A-Z],[ \d]\d)'
+
+OTHER_MOVE_REGEX = r'([A-Z],[ \d]\d)(.*)$'
 
 SITUATION_REGEX = r'(0\.\d\d\d\d)'
 
@@ -71,6 +73,7 @@ def main():
                 extract = re.search(UNICODE_STRING_REGEX, str(line))
                 if extract:
                     strings.append(extract.group(1))
+                    print(extract.group(1))
 
             goodstrings = []
 
@@ -86,7 +89,9 @@ def main():
 
             for s in goodstrings:
 
-                extract = re.search(MOVE_DATA_REGEX, s)
+                # First REGEX
+
+                extract = re.search(MOVE_REGEX, s)
                 if extract:
                     actual_move = extract.group(1)
                     letter = actual_move[0]
@@ -94,33 +99,36 @@ def main():
                     sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19)     # FIXME: currently assuming 19x19
 
                     sgf += ";{}[{}]".format(colour, sgf_move)
+                    comment = ""
 
                     colour = "B" if colour == "W" else "W"
 
-                    better_move = extract.group(3)
-                    letter = better_move[0]
-                    number = int(better_move[2:])
-                    sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19) # FIXME: currently assuming 19x19
+                    # Second REGEX
 
-                    sgf += "TR[{}]".format(sgf_move)
+                    extract = re.search(OTHER_MOVE_REGEX, s[8:])    # Don't start at start so as not to get the first move
+                    if extract:
+                        better_move = extract.group(1)
+                        letter = better_move[0]
+                        number = int(better_move[2:])
+                        sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19) # FIXME: currently assuming 19x19
 
-                    delta = extract.group(4)
+                        sgf += "TR[{}]".format(sgf_move)
 
-                    comment = ""
+                        delta = extract.group(2)
 
-                    if better_move != actual_move:
-                        comment += "CS prefers {}{}".format(letter, number)
-                        try:
-                            delta_float = float(delta)
-                            comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
-                        except:
-                            comment += "\n"
+                        if better_move != actual_move:
+                            comment += "CS prefers {}{}".format(letter, number)
+                            try:
+                                delta_float = float(delta)
+                                comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
+                            except:
+                                comment += "\n"
 
-                    extra_data = extract.group(2)
+                    # Third REGEX
 
-                    situation = re.search(SITUATION_REGEX, extra_data)
-                    if situation:
-                        situation_float = float(situation.group(1))
+                    extract = re.search(SITUATION_REGEX, s)
+                    if extract:
+                        situation_float = float(extract.group(1))
                         comment += "Black winrate: {:.2f} %\n".format(situation_float * 100)
 
                     if comment:
@@ -137,3 +145,4 @@ def main():
 
 
 main()
+input()
