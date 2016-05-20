@@ -1,47 +1,28 @@
 import re, sys, zipfile
 
+HOTSPOT_DELTA = 0.04    # Hotspot (sgf: "HO[1]") if delta >= this
+
 class BadFile(Exception): pass
 
 UNICODE_STRING_REGEX = r'UnicodeString="(.+)"'
-
 MOVE_REGEX = r'([A-Z],[ \d]\d)'
-
 OTHER_MOVE_REGEX = r'([A-Z],[ \d]\d)(.*)$'              # needs to be run on only the latter part of the string, else it will get 1st move
-
 SITUATION_REGEX = r'(0\.\d\d\d\d)'
 
-HOTSPOT_DELTA = 0.04    # Hotspot (sgf: "HO[1]") if delta >= this
 
-
-def sgf_point_from_english_string(s, boardsize):        # C17 ---> cc
+def sgf_point_from_english_string(s, boardsize):        # "C17" ---> "cc"
     if len(s) not in [2,3]:
-        return None
+        raise ValueError
     s = s.upper()
     xlookup = " ABCDEFGHJKLMNOPQRSTUVWXYZ"
-    try:
-        x = xlookup.index(s[0])
-    except:
-        return None
-    try:
-        y = boardsize - int(s[1:]) + 1
-    except:
-        return None
-    if 1 <= x <= boardsize and 1 <= y <= boardsize:
-        pass
-    else:
-        return None
+    x = xlookup.index(s[0])                             # Could raise ValueError
+    y = boardsize - int(s[1:]) + 1                      # Could raise ValueError
+    return sgf_point_from_point(x, y)
 
+
+def sgf_point_from_point(x, y):                         # 3, 3 --> "cc"
     if x < 1 or x > 26 or y < 1 or y > 26:
-        return None
-    s = ""
-    s += chr(x + 96)
-    s += chr(y + 96)
-    return s
-
-
-def sgf_point_from_point(x, y):                            # 3, 3 --> "cc"
-    if x < 1 or x > 26 or y < 1 or y > 26:
-        return None
+        raise ValueError
     s = ""
     s += chr(x + 96)
     s += chr(y + 96)
