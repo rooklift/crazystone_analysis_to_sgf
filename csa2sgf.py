@@ -99,9 +99,34 @@ def get_metadata(strings):
                 metadata["HA"] = int(s[17:])
             except:
                 pass
+        if s.startswith("Status: "):
+            if "Time up. Black loses" in s:
+                metadata["RE"] = "W+T"
+            if "Time up. White loses" in s:
+                metadata["RE"] = "B+T"
+            if "Black has resigned" in s:
+                metadata["RE"] = "W+R"
+            if "White has resigned" in s:
+                metadata["RE"] = "B+R"
+            if "White wins by" in s:
+                try:
+                    metadata["RE"] = "W+" + re.search(r'White wins by (.+) points', s).group(1)
+                except:
+                    pass
+            if "Black wins by" in s:
+                try:
+                    metadata["RE"] = "B+" + re.search(r'Black wins by (.+) points', s).group(1)
+                except:
+                    pass
 
         if len(s) == 10 and s[4] == "/" and s[7] == "/":
-            metadata["DT"] = "{}-{}-{}".format(s[0:4], s[5:7], s[8:10])
+            try:
+                year = int(s[0:4])
+                month = int(s[5:7])
+                day = int(s[8:10])
+                metadata["DT"] = "{}-{}-{}".format(year, month, day)
+            except:
+                pass
 
     metadata["GM"] = 1
     metadata["FF"] = 4
