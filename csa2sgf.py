@@ -1,4 +1,5 @@
 # CrazyStone Analysis to SGF
+# https://github.com/fohristiwhirl/crazystone_analysis_to_sgf
 #
 # The problem: CrazyStone Deep Learning 1.0 (released 2016-05-16) can analyse a game but the only output
 # is via printing its "Record Analysis List" from the Print menu. Fortunately, you can usually "print" it
