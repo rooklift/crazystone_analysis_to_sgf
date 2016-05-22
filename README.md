@@ -15,5 +15,5 @@ Features:
 
 Limitations:
 
-* Assumes 19x19
-* The location of handicap stones has to be guessed: free handicaps will be placed wrong, and handicap 3 is dubious
+* Can't determine board size from the input; use --size 9 or whatever in the arguments (anywhere in the argument list)
+* The location of handicap stones has to be guessed: free handicaps will be placed wrong, and handicap 3 is dubious.
