@@ -1,3 +1,15 @@
+# CrazyStone Analysis to SGF
+#
+# The problem: CrazyStone Deep Learning 1.0 (released 2016-05-16) can analyse a game but the only output
+# is via printing its "Record Analysis List" from the Print menu. Fortunately, you can usually "print" it
+# to an XPS or OXPS file.
+#
+# Such files are actually just zip-compressed directories that contain some other files. So conversion to
+# an SGF is just a matter of reading the right files in the archive and using the info contained therein.
+#
+# Usage: Arguments are generally considered to be filenames, except you can also do --size 9 (or whatever).
+# The same board size is used for every input file. Size 19 is used by default.
+
 import re, sys, zipfile
 
 HOTSPOT_DELTA = 0.04    # Hotspot (sgf: "HO[1]") if delta >= this
@@ -134,129 +146,154 @@ def get_metadata(strings):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: {0} <filename>".format(sys.argv[0]))
-        print("The filename should be a OXPS file from CrazyStone's Print command")
-        exit()
 
-    for zfile in sys.argv[1:]:
+    input_filepaths = []
+    boardsize = 19
 
-        with zipfile.ZipFile(zfile) as arch:
-
-            pages = []
-
-            n = 1
-            while True:
+    for n, arg in enumerate(sys.argv):
+        if n > 0:
+            if sys.argv[n - 1] == "--size":
                 try:
-                    decompressed_page = arch.open("Documents/1/Pages/{}.fpage".format(n))
-                    pages.append(decompressed_page)
+                    boardsize = int(arg)
                 except:
-                    break
-                n += 1
+                    print("Did not understand --size {}".format(arg))
+                    sys.exit()
+            elif arg != "--size" and sys.argv[n - 1] != "--size":
+                input_filepaths.append(arg)
 
-            if len(pages) == 0:
-                raise BadFile
+    for zfile in input_filepaths:
 
-            lines = []
+        try:
 
-            for page in pages:
-                for line in page:
-                    lines.append(line)
+            with zipfile.ZipFile(zfile) as arch:
 
-            strings = []
+                try:
 
-            for line in lines:
-                extract = re.search(UNICODE_STRING_REGEX, str(line))
-                if extract:
-                    strings.append(extract.group(1))
+                    pages = []
 
-            metadata = get_metadata(strings)
+                    n = 1
+                    while True:
+                        try:
+                            decompressed_page = arch.open("Documents/1/Pages/{}.fpage".format(n))
+                            pages.append(decompressed_page)
+                        except:
+                            break
+                        n += 1
 
-            goodstrings = []
+                    if len(pages) == 0:
+                        raise BadFile
 
-            nextstart = 1
-            for s in strings:
-                startstring = "{} ".format(nextstart)
-                if s.startswith(startstring):
-                    goodstrings.append(s)
-                    nextstart += 1
+                    lines = []
 
-            sgf = "(;"
-            colour = "B"
+                    for page in pages:
+                        for line in page:
+                            lines.append(line)
 
-            for key in metadata:
-                sgf += key + "[" + str(metadata[key]) + "]"
+                    strings = []
 
-            if metadata.get("HA"):
-                colour = "W"
-                points = handicap_points(19, metadata["HA"])
-                sgf += "AB"
-                for point in points:
-                    sgf += "[{}]".format(sgf_point_from_point(point[0], point[1]))
-                sgf += "C[WARNING: Handicap placement has been guessed at by csa2sgf.py]"
+                    for line in lines:
+                        extract = re.search(UNICODE_STRING_REGEX, str(line))
+                        if extract:
+                            strings.append(extract.group(1))
 
-            for s in goodstrings:
+                    metadata = get_metadata(strings)
+                    metadata["SZ"] = boardsize
 
-                # First REGEX
+                    goodstrings = []
 
-                extract = re.search(MOVE_REGEX, s)
-                if extract:
+                    nextstart = 1
+                    for s in strings:
+                        startstring = "{} ".format(nextstart)
+                        if s.startswith(startstring):
+                            goodstrings.append(s)
+                            nextstart += 1
 
-                    # i.e. there actually is a move
+                    sgf = "(;"
+                    colour = "B"
 
-                    actual_move = extract.group(1)
-                    letter = actual_move[0]
-                    number = int(actual_move[2:])
-                    sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19)     # FIXME: currently assuming 19x19
+                    for key in metadata:
+                        sgf += key + "[" + str(metadata[key]) + "]"
 
-                    sgf += ";{}[{}]".format(colour, sgf_move)
-                    comment = ""
+                    if metadata.get("HA"):
+                        colour = "W"
+                        points = handicap_points(boardsize, metadata["HA"])
+                        sgf += "AB"
+                        for point in points:
+                            sgf += "[{}]".format(sgf_point_from_point(point[0], point[1]))
+                        sgf += "C[WARNING: Handicap placement has been guessed at by csa2sgf.py]"
 
-                    colour = "B" if colour == "W" else "W"          # This is for the next move after this one
+                    for s in goodstrings:
 
-                    # Second REGEX
+                        # First REGEX
 
-                    extract = re.search(OTHER_MOVE_REGEX, s[8:])    # Don't start at start so as not to get the first move
-                    if extract:
-                        better_move = extract.group(1)
-                        letter = better_move[0]
-                        number = int(better_move[2:])
-                        sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), 19) # FIXME: currently assuming 19x19
+                        extract = re.search(MOVE_REGEX, s)
+                        if extract:
 
-                        sgf += "TR[{}]".format(sgf_move)
+                            # i.e. there actually is a move
 
-                        delta = extract.group(2)
+                            actual_move = extract.group(1)
+                            letter = actual_move[0]
+                            number = int(actual_move[2:])
+                            sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), boardsize)
 
-                        if better_move != actual_move:
-                            comment += "CS prefers {}{}".format(letter, number)
-                            try:
-                                delta_float = float(delta)
-                                comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
-                                if delta_float >= HOTSPOT_DELTA:
-                                    sgf += "HO[1]"
-                            except:
-                                comment += "\n"
+                            sgf += ";{}[{}]".format(colour, sgf_move)
+                            comment = ""
 
-                    # Third REGEX
+                            colour = "B" if colour == "W" else "W"          # This is for the next move after this one
 
-                    extract = re.search(SITUATION_REGEX, s)
-                    if extract:
-                        situation_float = float(extract.group(1))
-                        comment += "Black winrate: {:.2f} %\n".format(situation_float * 100)
+                            # Second REGEX
 
-                    # Done
+                            extract = re.search(OTHER_MOVE_REGEX, s[8:])    # Don't start at start so as not to get the first move
+                            if extract:
+                                better_move = extract.group(1)
+                                letter = better_move[0]
+                                number = int(better_move[2:])
+                                sgf_move = sgf_point_from_english_string("{}{}".format(letter, number), boardsize)
 
-                    if comment:
-                        comment = comment.strip()
-                        sgf += "C[{}]".format(comment)
+                                sgf += "TR[{}]".format(sgf_move)
 
-            sgf += ")"
+                                delta = extract.group(2)
 
-            outfilename = "{}_analysis.sgf".format(zfile)
+                                if better_move != actual_move:
+                                    comment += "CS prefers {}{}".format(letter, number)
+                                    try:
+                                        delta_float = float(delta)
+                                        comment += " -- delta: {:.2f} %\n".format(delta_float * 100)
+                                        if delta_float >= HOTSPOT_DELTA:
+                                            sgf += "HO[1]"
+                                    except:
+                                        comment += "\n"
 
-            with open(outfilename, "w") as outfile:
-                outfile.write(sgf)
+                            # Third REGEX
+
+                            extract = re.search(SITUATION_REGEX, s)
+                            if extract:
+                                situation_float = float(extract.group(1))
+                                comment += "Black winrate: {:.2f} %\n".format(situation_float * 100)
+
+                            # Done
+
+                            if comment:
+                                comment = comment.strip()
+                                sgf += "C[{}]".format(comment)
+
+                    sgf += ")"
+
+                    outfilename = "{}_analysis.sgf".format(zfile)
+
+                    with open(outfilename, "w") as outfile:
+                        outfile.write(sgf)
+
+                    print("{} converted to {}".format(zfile, outfilename))
+
+
+                except:
+                    print("Couldn't parse {} at size {}".format(zfile, boardsize))
+
+        except:
+            print("Couldn't open {} or interpret it as a zip file".format(zfile))
 
 
 
-main()
+if __name__ == "__main__":
+    main()
