@@ -144,6 +144,7 @@ def get_metadata(strings):
     metadata["FF"] = 4
     return metadata
 
+
 def make_sgf_file_from_archive(arch, boardsize, outfilename):
     pages = []
 
@@ -294,7 +295,6 @@ def main():
                     print("Couldn't parse {} at size {}".format(zfile, boardsize))
         except:
             print("Couldn't open {} or interpret it as a zip file".format(zfile))
-
 
 
 if __name__ == "__main__":
