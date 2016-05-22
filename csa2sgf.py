@@ -224,6 +224,14 @@ def main():
 
                     for s in goodstrings:
 
+                        # Example good string: "17 K,1600:00:00102260.5070411.5±16 F,170.001037"
+                        # Meaning:
+                        #
+                        # Move 17, K16 was played, thinking time was 00:00:00, 10226 playouts,
+                        # Black wins P = 0.507041, projected score = 1.5±16, CrazyStone prefers
+                        # F17, delta is 0.001037
+
+
                         # First REGEX
 
                         extract = re.search(MOVE_REGEX, s)
