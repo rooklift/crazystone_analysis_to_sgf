@@ -137,7 +137,7 @@ def get_metadata(strings):
                 year = int(s[0:4])
                 month = int(s[5:7])
                 day = int(s[8:10])
-                metadata["DT"] = "{}-{}-{}".format(year, month, day)
+                metadata["DT"] = "{:04d}-{:02d}-{:02d}".format(year, month, day)
             except:
                 pass
 
