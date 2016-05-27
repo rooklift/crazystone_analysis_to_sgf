@@ -11,7 +11,7 @@
 # Usage: Arguments are generally considered to be filenames, except you can also do --size 9 (or whatever).
 # The same board size is used for every input file. Size 19 is used by default.
 
-import re, sys, zipfile
+import codecs, re, sys, zipfile
 
 HOTSPOT_DELTA = 0.04    # Hotspot (sgf: "HO[1]") if delta >= this
 
@@ -143,6 +143,7 @@ def get_metadata(strings):
 
     metadata["GM"] = 1
     metadata["FF"] = 4
+    metadata["CA"] = "UTF-8"
     return metadata
 
 
@@ -164,7 +165,7 @@ def make_sgf_file_from_archive(arch, boardsize, outfilename):
     lines = []
 
     for page in pages:
-        for line in page:
+        for line in codecs.iterdecode(page, 'utf8'):
             lines.append(line)
 
     strings = []
@@ -265,7 +266,7 @@ def make_sgf_file_from_archive(arch, boardsize, outfilename):
 
     sgf += ")"
 
-    with open(outfilename, "w") as outfile:
+    with open(outfilename, "w", encoding="utf8") as outfile:
         outfile.write(sgf)
 
 
