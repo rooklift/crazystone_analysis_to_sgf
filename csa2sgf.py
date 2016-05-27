@@ -165,7 +165,7 @@ def make_sgf_file_from_archive(arch, boardsize, outfilename):
     lines = []
 
     for page in pages:
-        for line in codecs.iterdecode(page, 'utf8'):
+        for line in codecs.iterdecode(page, encoding = "utf8", errors = "replace"):
             lines.append(line)
 
     strings = []
