@@ -178,13 +178,13 @@ def make_sgf_file_from_archive(arch, boardsize, outfilename):
     metadata = get_metadata(strings)
     metadata["SZ"] = boardsize
 
-    goodstrings = []
+    movestrings = []
 
     nextstart = 1
     for s in strings:
         startstring = "{} ".format(nextstart)
         if s.startswith(startstring):
-            goodstrings.append(s)
+            movestrings.append(s)
             nextstart += 1
 
     sgf = "(;"
@@ -201,9 +201,9 @@ def make_sgf_file_from_archive(arch, boardsize, outfilename):
             sgf += "[{}]".format(sgf_point_from_point(point[0], point[1]))
         sgf += "C[WARNING: Handicap placement has been guessed at by csa2sgf.py]"
 
-    for s in goodstrings:
+    for s in movestrings:
 
-        # Example good string: "17 K,1600:00:00102260.5070411.5±16 F,170.001037"
+        # Example move string: "17 K,1600:00:00102260.5070411.5±16 F,170.001037"
         # Meaning:
         #
         # Move 17, K16 was played, thinking time was 00:00:00, 10226 playouts,
