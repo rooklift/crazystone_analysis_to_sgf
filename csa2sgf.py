@@ -99,9 +99,9 @@ def get_metadata(strings):
 
     for s in strings:
         if s.startswith("Black: "):
-            metadata["PB"] = s[7:]
+            metadata["PB"] = s[7:].replace("…", "...")
         if s.startswith("White: "):
-            metadata["PW"] = s[7:]
+            metadata["PW"] = s[7:].replace("…", "...")
         if s.startswith("Komi: "):
             try:
                 metadata["KM"] = float(s[6:])
