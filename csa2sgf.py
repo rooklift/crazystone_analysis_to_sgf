@@ -271,7 +271,7 @@ def winrate_transformer(stdev):
       else:
         lower = mid
 
-  if(stdev * stdev <= 1e-10):
+  if stdev * stdev <= 1e-10:
     raise ValueError("Stdev too small, please choose a more reasonable value")
 
   # Repeated doubling to find an upper bound big enough
