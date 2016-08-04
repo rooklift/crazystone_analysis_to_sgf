@@ -1,4 +1,7 @@
 # crazystone_analysis_to_sgf
+
+**NOTE, 2016-08-04: User Lightvector [added some features](https://github.com/lightvector/crazystone_analysis_to_sgf/tree/winrate-scaling) which you can find in his repo; you may prefer that version.**
+
 Convert a [CrazyStone](http://www.remi-coulom.fr/CrazyStone/) XPS / OXPS analysis file to SGF
 
 To use:
