@@ -2,7 +2,7 @@
 
 <br>
 
-**NOTE, 2016-08-04: User Lightvector [added some features](https://github.com/lightvector/crazystone_analysis_to_sgf/tree/winrate-scaling) which you can find in his repo; you may prefer that version.**
+**NOTE, 2016-08-04: User Lightvector [added some features](https://github.com/lightvector/crazystone_analysis_to_sgf) which you can find in his repo; you may prefer that version.**
 
 <br>
 
